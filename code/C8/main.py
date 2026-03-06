@@ -30,8 +30,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class RecipeRAGSystem:
-    """食谱RAG系统主类"""
+class CatCareRAGSystem:
+    """宠物猫养护 RAG 系统主类"""
 
     def __init__(self, config: RAGConfig = None):
         """
@@ -89,7 +89,7 @@ class RecipeRAGSystem:
         if vectorstore is not None:
             print("✅ 成功加载已保存的向量索引！")
             # 仍需要加载文档和分块用于检索模块
-            print("加载食谱文档...")
+            print("加载猫咪养护文档...")
             self.data_module.load_documents()
             print("进行文本分块...")
             chunks = self.data_module.chunk_documents()
@@ -97,7 +97,7 @@ class RecipeRAGSystem:
             print("未找到已保存的索引，开始构建新索引...")
 
             # 2. 加载文档
-            print("加载食谱文档...")
+            print("加载猫咪养护文档...")
             self.data_module.load_documents()
 
             # 3. 文本分块
@@ -121,7 +121,7 @@ class RecipeRAGSystem:
         print(f"\n📊 知识库统计:")
         print(f"   文档总数: {stats['total_documents']}")
         print(f"   文本块数: {stats['total_chunks']}")
-        print(f"   菜品分类: {list(stats['categories'].keys())}")
+        print(f"   主题分类: {list(stats['categories'].keys())}")
         print(f"   难度分布: {stats['difficulties']}")
 
         print("✅ 知识库构建完成！")
@@ -310,9 +310,9 @@ class RecipeRAGSystem:
     def run_interactive(self):
         """运行交互式问答"""
         print("=" * 60)
-        print("🍽️  尝尝咸淡RAG系统 - 交互式问答  🍽️")
+        print("🐱 宠物猫养护 RAG 系统 - 交互式问答 🐱")
         print("=" * 60)
-        print("💡 解决您的选择困难症，告别'今天吃什么'的世纪难题！")
+        print("💡 解决您的猫咪养护问题，为咪生保驾护航！")
         
         # 初始化系统
         self.initialize_system()
@@ -348,7 +348,7 @@ class RecipeRAGSystem:
             except Exception as e:
                 print(f"处理问题时出错: {e}")
         
-        print("\n感谢使用尝尝咸淡RAG系统！")
+        print("\n感谢使用宠物猫养护 RAG 系统！")
 
 
 
@@ -356,7 +356,7 @@ def main():
     """主函数"""
     try:
         # 创建RAG系统
-        rag_system = RecipeRAGSystem()
+        rag_system = CatCareRAGSystem()
         
         # 运行交互式问答
         rag_system.run_interactive()
