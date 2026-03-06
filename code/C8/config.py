@@ -10,8 +10,8 @@ class RAGConfig:
     """RAG系统配置类"""
 
     # 路径配置
-    data_path: str = "../../data/C8/cook"
-    index_save_path: str = "./vector_index"
+    data_path: str = "../../data/C8/cat_care"
+    index_save_path: str = "./vector_index_cat_care"
 
     # 模型配置
     embedding_model: str = "BAAI/bge-small-zh-v1.5"

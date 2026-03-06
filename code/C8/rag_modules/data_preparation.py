@@ -18,15 +18,11 @@ class DataPreparationModule:
     """数据准备模块 - 负责数据加载、清洗和预处理"""
     # 统一维护的分类与难度配置，供外部复用，避免关键词重复定义
     CATEGORY_MAPPING = {
-        'meat_dish': '荤菜',
-        'vegetable_dish': '素菜',
-        'soup': '汤品',
-        'dessert': '甜品',
-        'breakfast': '早餐',
-        'staple': '主食',
-        'aquatic': '水产',
-        'condiment': '调料',
-        'drink': '饮品'
+        'behavior': '行为问题',
+        'dailycare': '日常护理',
+        'emergency': '紧急情况',
+        'lifecycle': '生命周期',
+        'nutrition': '营养管理',
     }
     CATEGORY_LABELS = list(set(CATEGORY_MAPPING.values()))
     DIFFICULTY_LABELS = ['非常简单', '简单', '中等', '困难', '非常困难']
@@ -102,15 +98,15 @@ class DataPreparationModule:
         file_path = Path(doc.metadata.get('source', ''))
         path_parts = file_path.parts
         
-        # 提取菜品分类
+        # 提取文档分类（如行为问题、紧急情况等）
         doc.metadata['category'] = '其他'
         for key, value in self.CATEGORY_MAPPING.items():
             if key in path_parts:
                 doc.metadata['category'] = value
                 break
         
-        # 提取菜品名称
-        doc.metadata['dish_name'] = file_path.stem
+        # 提取主题名称或标题
+        doc.metadata['topic_name'] = file_path.stem
 
         # 分析难度等级
         content = doc.page_content
@@ -173,8 +169,8 @@ class DataPreparationModule:
         """
         # 定义要分割的标题层级
         headers_to_split_on = [
-            ("#", "主标题"),      # 菜品名称
-            ("##", "二级标题"),   # 必备原料、计算、操作等
+            ("#", "主标题"),      # 主题名称
+            ("##", "二级标题"),   # 常见小节标题（可能原因、处理步骤、急救措施等）
             ("###", "三级标题")   # 简易版本、复杂版本等
         ]
 
@@ -193,17 +189,17 @@ class DataPreparationModule:
                 has_headers = any(line.strip().startswith('#') for line in content_preview.split('\n'))
 
                 if not has_headers:
-                    logger.warning(f"文档 {doc.metadata.get('dish_name', '未知')} 内容中没有发现Markdown标题")
+                    logger.warning(f"文档 {doc.metadata.get('topic_name', '未知')} 内容中没有发现Markdown标题")
                     logger.debug(f"内容预览: {content_preview}")
 
                 # 对每个文档进行Markdown分割
                 md_chunks = markdown_splitter.split_text(doc.page_content)
 
-                logger.debug(f"文档 {doc.metadata.get('dish_name', '未知')} 分割成 {len(md_chunks)} 个chunk")
+                logger.debug(f"文档 {doc.metadata.get('topic_name', '未知')} 分割成 {len(md_chunks)} 个chunk")
 
                 # 如果没有分割成功，说明文档可能没有标题结构
                 if len(md_chunks) <= 1:
-                    logger.warning(f"文档 {doc.metadata.get('dish_name', '未知')} 未能按标题分割，可能缺少标题结构")
+                    logger.warning(f"文档 {doc.metadata.get('topic_name', '未知')} 未能按标题分割，可能缺少标题结构")
 
                 # 为每个子块建立与父文档的关系
                 parent_id = doc.metadata["parent_id"]
@@ -239,7 +235,7 @@ class DataPreparationModule:
         按分类过滤文档
         
         Args:
-            category: 菜品分类
+            category: 主题分类
             
         Returns:
             过滤后的文档列表
@@ -301,7 +297,7 @@ class DataPreparationModule:
         for doc in self.documents:
             metadata_list.append({
                 'source': doc.metadata.get('source'),
-                'dish_name': doc.metadata.get('dish_name'),
+                'topic_name': doc.metadata.get('topic_name'),
                 'category': doc.metadata.get('category'),
                 'difficulty': doc.metadata.get('difficulty'),
                 'content_length': len(doc.page_content)
@@ -354,10 +350,10 @@ class DataPreparationModule:
         # 收集父文档名称和相关性信息用于日志
         parent_info = []
         for doc in parent_docs:
-            dish_name = doc.metadata.get('dish_name', '未知菜品')
+            topic_name = doc.metadata.get('topic_name', '未知主题')
             parent_id = doc.metadata.get('parent_id')
             relevance_count = parent_relevance.get(parent_id, 0)
-            parent_info.append(f"{dish_name}({relevance_count}块)")
+            parent_info.append(f"{topic_name}({relevance_count}块)")
 
         logger.info(f"从 {len(child_chunks)} 个子块中找到 {len(parent_docs)} 个去重父文档: {', '.join(parent_info)}")
         return parent_docs

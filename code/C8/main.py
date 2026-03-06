@@ -169,16 +169,16 @@ class RecipeRAGSystem:
         if relevant_chunks:
             chunk_info = []
             for chunk in relevant_chunks:
-                dish_name = chunk.metadata.get('dish_name', '未知菜品')
+                topic_name = chunk.metadata.get('topic_name', '未知主题')
                 # 尝试从内容中提取章节标题
                 content_preview = chunk.page_content[:100].strip()
                 if content_preview.startswith('#'):
                     # 如果是标题开头，提取标题（仅取第一行）
                     title_end = content_preview.find('\n') if '\n' in content_preview else len(content_preview)
                     section_title = content_preview[:title_end].replace('#', '').strip()
-                    chunk_info.append(f"{dish_name}({section_title})")
+                    chunk_info.append(f"{topic_name}({section_title})")
                 else:
-                    chunk_info.append(f"{dish_name}(内容片段)")
+                    chunk_info.append(f"{topic_name}(内容片段)")
 
             print(f"找到 {len(relevant_chunks)} 个相关文档块: {', '.join(chunk_info)}")
         else:
@@ -186,19 +186,19 @@ class RecipeRAGSystem:
 
         # 4. 检查是否找到相关内容
         if not relevant_chunks:
-            return "抱歉，没有找到相关的食谱信息。请尝试其他菜品名称或关键词。"
+            return "抱歉，没有找到相关的猫咪养护信息。请尝试换一个描述方式或更具体的问题。"
 
         # 5. 根据路由类型选择回答方式
         if route_type == 'list':
-            # 列表查询：直接返回菜品名称列表
-            print("📋 生成菜品列表...")
+            # 列表查询：直接返回猫咪养护主题名称列表
+            print("📋 生成猫咪养护主题列表...")
             relevant_docs = self.data_module.get_parent_documents(relevant_chunks)
 
             # 显示找到的文档名称
             doc_names = []
             for doc in relevant_docs:
-                dish_name = doc.metadata.get('dish_name', '未知菜品')
-                doc_names.append(dish_name)
+                topic_name = doc.metadata.get('topic_name', '未知主题')
+                doc_names.append(topic_name)
 
             if doc_names:
                 print(f"找到文档: {', '.join(doc_names)}")
@@ -212,8 +212,8 @@ class RecipeRAGSystem:
             # 显示找到的文档名称
             doc_names = []
             for doc in relevant_docs:
-                dish_name = doc.metadata.get('dish_name', '未知菜品')
-                doc_names.append(dish_name)
+                topic_name = doc.metadata.get('topic_name', '未知主题')
+                doc_names.append(topic_name)
 
             if doc_names:
                 print(f"找到文档: {', '.join(doc_names)}")
@@ -259,14 +259,14 @@ class RecipeRAGSystem:
     
     def search_by_category(self, category: str, query: str = "") -> List[str]:
         """
-        按分类搜索菜品
+        按分类搜索猫咪养护主题
         
         Args:
-            category: 菜品分类
+            category: 主题分类
             query: 可选的额外查询条件
             
         Returns:
-            菜品名称列表
+            主题名称列表
         """
         if not self.retrieval_module:
             raise ValueError("请先构建知识库")
@@ -277,33 +277,33 @@ class RecipeRAGSystem:
         
         docs = self.retrieval_module.metadata_filtered_search(search_query, filters, top_k=10)
         
-        # 提取菜品名称
-        dish_names = []
+        # 提取主题名称
+        topic_names = []
         for doc in docs:
-            dish_name = doc.metadata.get('dish_name', '未知菜品')
-            if dish_name not in dish_names:
-                dish_names.append(dish_name)
+            topic_name = doc.metadata.get('topic_name', '未知主题')
+            if topic_name not in topic_names:
+                topic_names.append(topic_name)
         
-        return dish_names
+        return topic_names
     
-    def get_ingredients_list(self, dish_name: str) -> str:
+    def get_care_info(self, topic_name: str) -> str:
         """
-        获取指定菜品的食材信息
+        获取指定猫咪养护主题的详细信息
 
         Args:
-            dish_name: 菜品名称
+            topic_name: 主题名称
 
         Returns:
-            食材信息
+            养护信息
         """
         if not all([self.retrieval_module, self.generation_module]):
             raise ValueError("请先构建知识库")
 
         # 搜索相关文档
-        docs = self.retrieval_module.hybrid_search(dish_name, top_k=3)
+        docs = self.retrieval_module.hybrid_search(topic_name, top_k=3)
 
-        # 生成食材信息
-        answer = self.generation_module.generate_basic_answer(f"{dish_name}需要什么食材？", docs)
+        # 生成养护信息
+        answer = self.generation_module.generate_basic_answer(f"{topic_name}如何应对？", docs)
 
         return answer
     
