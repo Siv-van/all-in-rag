@@ -17,13 +17,31 @@ logger = logging.getLogger(__name__)
 class DataPreparationModule:
     """数据准备模块 - 负责数据加载、清洗和预处理"""
     # 统一维护的分类与难度配置，供外部复用，避免关键词重复定义
+    # 原有基于中文猫咪养护目录结构的分类映射已不再适用于英文 raw_data_clean_v3_2_1 目录，
+    # 这里根据 raw_data_clean_v3_2_1 的实际子目录重建分类映射：
     CATEGORY_MAPPING = {
-        'behavior': '行为问题',
-        'dailycare': '日常护理',
-        'emergency': '紧急情况',
-        'lifecycle': '生命周期',
-        'nutrition': '营养管理',
+        "behaviour_psychology": "behaviour_psychology",
+        "breeding_life_cycle": "breeding_life_cycle",
+        "daily_care_grooming": "daily_care_grooming",
+        "emergency_toxicology": "emergency_toxicology",
+        "end_of_life": "end_of_life",
+        "environment_management": "environment_management",
+        "general_information": "general_information",
+        "health_diseases": "health_diseases",
+        "human_cat_relationship": "human_cat_relationship",
+        "knowledge_base": "knowledge_base",
+        "nutrition_feeding": "nutrition_feeding",
+        "population_control_stray_cats": "population_control_stray_cats",
+        "symptoms_conditions": "symptoms_conditions",
+        "vet_medical_procedures": "vet_medical_procedures",
     }
+    # CATEGORY_MAPPING = {
+    #     'behavior': '行为问题',
+    #     'dailycare': '日常护理',
+    #     'emergency': '紧急情况',
+    #     'lifecycle': '生命周期',
+    #     'nutrition': '营养管理',
+    # }
     CATEGORY_LABELS = list(set(CATEGORY_MAPPING.values()))
     DIFFICULTY_LABELS = ['非常简单', '简单', '中等', '困难', '非常困难']
     
@@ -35,7 +53,7 @@ class DataPreparationModule:
             data_path: 数据文件夹路径
         """
         self.data_path = data_path
-        self.documents: List[Document] = []  # 父文档（完整食谱）
+        self.documents: List[Document] = []  # 父文档（完整文档）
         self.chunks: List[Document] = []     # 子文档（按标题分割的小块）
         self.parent_child_map: Dict[str, str] = {}  # 子块ID -> 父文档ID的映射
     
