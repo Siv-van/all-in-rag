@@ -139,31 +139,37 @@ class CatCareRAGSystem:
         """
         if not all([self.retrieval_module, self.generation_module]):
             raise ValueError("请先构建知识库")
-        
-        print(f"\n❓ 用户问题: {question}")
 
-        # 1. 查询路由
-        route_type = self.generation_module.query_router(question)
+        # 保留原始中文问题，用于回答阶段
+        question_zh = question
+        print(f"\n❓ 用户问题(中文): {question_zh}")
+
+        # 1. 将中文问题翻译为英文，用于在英文知识库中检索
+        try:
+            question_en = self.generation_module.translate_zh_to_en(question_zh)
+        except Exception as e:
+            logger.error(f"中文问题翻译英文失败，回退为原始中文查询用于检索: {e}")
+            question_en = question_zh
+
+        print(f"🔤 用于检索的英文问题: {question_en}")
+
+        # 2. 查询路由（基于英文问题）
+        route_type = self.generation_module.query_router(question_en)
         print(f"🎯 查询类型: {route_type}")
 
-        # 2. 智能查询重写（根据路由类型）
+        # 3. 智能查询重写（根据路由类型，基于英文问题）
         if route_type == 'list':
             # 列表查询保持原查询
-            rewritten_query = question
-            print(f"📝 列表查询保持原样: {question}")
+            rewritten_query = question_en
+            print(f"📝 列表查询保持原样(英文): {question_en}")
         else:
             # 详细查询和一般查询使用智能重写
             print("🤖 智能分析查询...")
-            rewritten_query = self.generation_module.query_rewrite(question)
+            rewritten_query = self.generation_module.query_rewrite(question_en)
         
-        # 3. 检索相关子块（自动应用元数据过滤）
+        # 4. 检索相关子块（此处暂不使用基于中文关键词的元数据过滤）
         print("🔍 检索相关文档...")
-        filters = self._extract_filters_from_query(question)
-        if filters:
-            print(f"应用过滤条件: {filters}")
-            relevant_chunks = self.retrieval_module.metadata_filtered_search(rewritten_query, filters, top_k=self.config.top_k)
-        else:
-            relevant_chunks = self.retrieval_module.hybrid_search(rewritten_query, top_k=self.config.top_k)
+        relevant_chunks = self.retrieval_module.hybrid_search(rewritten_query, top_k=self.config.top_k)
 
         # 显示检索到的子块信息
         if relevant_chunks:
@@ -184,11 +190,11 @@ class CatCareRAGSystem:
         else:
             print(f"找到 {len(relevant_chunks)} 个相关文档块")
 
-        # 4. 检查是否找到相关内容
+        # 5. 检查是否找到相关内容
         if not relevant_chunks:
             return "抱歉，没有找到相关的猫咪养护信息。请尝试换一个描述方式或更具体的问题。"
 
-        # 5. 根据路由类型选择回答方式
+        # 6. 根据路由类型选择回答方式（回答始终使用中文问题 question_zh）
         if route_type == 'list':
             # 列表查询：直接返回猫咪养护主题名称列表
             print("📋 生成猫咪养护主题列表...")
@@ -203,7 +209,7 @@ class CatCareRAGSystem:
             if doc_names:
                 print(f"找到文档: {', '.join(doc_names)}")
 
-            return self.generation_module.generate_list_answer(question, relevant_docs)
+            return self.generation_module.generate_list_answer(question_zh, relevant_docs)
         else:
             # 详细查询：获取完整文档并生成详细回答
             print("获取完整文档...")
@@ -226,15 +232,15 @@ class CatCareRAGSystem:
             if route_type == "detail":
                 # 详细查询使用分步指导模式
                 if stream:
-                    return self.generation_module.generate_step_by_step_answer_stream(question, relevant_docs)
+                    return self.generation_module.generate_step_by_step_answer_stream(question_zh, relevant_docs)
                 else:
-                    return self.generation_module.generate_step_by_step_answer(question, relevant_docs)
+                    return self.generation_module.generate_step_by_step_answer(question_zh, relevant_docs)
             else:
                 # 一般查询使用基础回答模式
                 if stream:
-                    return self.generation_module.generate_basic_answer_stream(question, relevant_docs)
+                    return self.generation_module.generate_basic_answer_stream(question_zh, relevant_docs)
                 else:
-                    return self.generation_module.generate_basic_answer(question, relevant_docs)
+                    return self.generation_module.generate_basic_answer(question_zh, relevant_docs)
     
     def _extract_filters_from_query(self, query: str) -> dict:
         """
