@@ -190,6 +190,40 @@ class GenerationIntegrationModule:
 
         return response
 
+    def translate_zh_to_en(self, question_zh: str) -> str:
+        """
+        将用户的中文问题翻译成英文，用于在英文猫咪养护文档中检索信息。
+
+        Args:
+            question_zh: 中文问题
+
+        Returns:
+            翻译后的英文问题
+        """
+        prompt = ChatPromptTemplate.from_template("""
+你是一个专业的中英翻译助手。请把下面的中文问题翻译成自然、简洁的英文问句，用于在英文猫咪养护文档中检索信息。
+
+要求：
+- 严格保持原始含义，不要添加或删减信息
+- 不要解释，不要分点，只输出翻译后的英文问题一句话
+
+中文问题：
+{question}
+
+英文问题：
+""")
+
+        chain = (
+            {"question": RunnablePassthrough()}
+            | prompt
+            | self.llm
+            | StrOutputParser()
+        )
+
+        response = chain.invoke(question_zh).strip()
+        logger.info(f"中文查询翻译为英文用于检索: '{question_zh}' → '{response}'")
+        return response
+
 
 
     def query_router(self, query: str) -> str:
