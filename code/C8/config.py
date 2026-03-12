@@ -10,7 +10,7 @@ class RAGConfig:
     """RAG系统配置类"""
 
     # 路径配置
-    data_path: str = "../../data/C8/cat_care"
+    data_path: str = "../../data/C8/raw_data_clean_v3_2_1"
     index_save_path: str = "./vector_index_cat_care"
 
     # 模型配置
